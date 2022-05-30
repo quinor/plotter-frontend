@@ -48,6 +48,10 @@ const showPreview = () => {
   document.getElementById("preview-img").src = "/preview/" + Math.floor(Math.random() * 1000).toString()
 }
 
+const enableWeb3 = () => {
+  document.getElementById("web-3").play();
+};
+
 const getInput = (field) => {
   if (field.type == "checkbox") {
     return Boolean(field.checked);
