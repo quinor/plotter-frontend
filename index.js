@@ -8,6 +8,7 @@ const path = require("path");
 const morgan = require("morgan");
 const Validator = require("validatorjs");
 const { nextTick } = require("process");
+const { SerialPort } = require('serialport');
 
 const validator = (body, rules, customMessages, callback) => {
   const validation = new Validator(body, rules, customMessages);
@@ -159,7 +160,6 @@ let plotterLastOutput = ""
 let plotterAuthor = ""
 let plotterSizeCur = 0;
 let plotterSizeTotal = 1;
-let plotterPaused = false;
 
 const plotterPort = '/dev/ttyS0';
 
@@ -199,11 +199,17 @@ const plotterRun = (req, res) => {
       }
 
       // Configure serial port
-      exec(`stty -F ${plotterPort} 9600 crtscts`, (err, stdout, stderr) => {
+      const plotterWriter = new SerialPort({
+        path: plotterPort,
+        baudRate: 9600,
+        rtscts: true,
+        autoOpen: false,
+      });
+
+      plotterWriter.open((err) => {
           if (err) {
-              console.error(`====== Got code ${err.code} while running stty ======`);
-              console.error(stdout);
-              console.error(stderr);
+              console.error(`====== Error while opening port ======`);
+              console.error(err);
               plotterReader = undefined;
               plotterLastOutput = "setup failed";
               res.status(500).send("Could not setup serial port");
@@ -213,11 +219,12 @@ const plotterRun = (req, res) => {
           // Open the copy and the port to be read one byte at a time
           // so it can be interrupted whenever
           plotterReader = fs.createReadStream(tempWildfile, {highWaterMark: 1});
-          plotterWriter = fs.createWriteStream(plotterPort, {highWaterMark: 1});
 
           // When we read something
           plotterReader.on('data', (chunk) => {
               plotterSizeCur += chunk.length;
+              plotterWriter.write(chunk);
+              plotterWriter.drain();
           });
 
           // For when errors happen
@@ -225,20 +232,17 @@ const plotterRun = (req, res) => {
               console.error("====== Error while reading ======");
               console.error(err);
               plotterLastOutput = "read failed";
-              plotterReader.close();
           });
 
           plotterWriter.on('error', (err) => {
               console.error("====== Error while writing ======");
               console.error(err);
               plotterLastOutput = "write failed";
-              plotterReader.close();
           });
 
           // For when the file is reached
           plotterReader.on('end', () => {
               plotterLastOutput = "success";
-              plotterWriter.close();
           });
 
           // For when we stop writing
@@ -248,12 +252,9 @@ const plotterRun = (req, res) => {
               plotterWriter.close();
           });
 
-          // Copy everything in the file to the plotter
-          plotterReader.pipe(plotterWriter);
-          plotterLastOutput = "printing...";
-
           // At this point the process should be started,
           // so we answer the HTTP call
+          plotterLastOutput = "printing...";
           plotterAuthor = req.sid;
           res.send({status: "success"});
       });
@@ -261,13 +262,14 @@ const plotterRun = (req, res) => {
 }
 
 const plotterStatus = (req, res) => {
+  const busy = plotterReader !== undefined && plotterReader !== true;
   return res.json({
-    "busy": plotterReader !== undefined && plotterReader !== true,
+    "busy": busy,
     "last_output" : plotterLastOutput,
     "author": plotterAuthor,
     "sizeCur": plotterSizeCur,
     "sizeTotal": plotterSizeTotal,
-    "paused": plotterPaused,
+    "paused": busy && plotterReader.isPaused(),
   });
 }
 
@@ -275,12 +277,7 @@ const plotterPause = (req, res) => {
   if (plotterReader === undefined || plotterReader === true) {
     return res.status(409).send("Not running");
   }
-  if (plotterPaused) {
-    return res.status(409).send("Already paused");
-  }
-  plotterPaused = true;
   plotterLastOutput = "paused";
-  plotterReader.unpipe();
   plotterReader.pause();
   return res.send({ status: "success" });
 }
@@ -289,12 +286,8 @@ const plotterResume = (req, res) => {
   if (plotterReader === undefined || plotterReader === true) {
     return res.status(409).send("Not running");
   }
-  if (!plotterPaused) {
-    return res.status(409).send("Not paused");
-  }
-  plotterPaused = false;
   plotterLastOutput = "printing...";
-  plotterReader.pipe(plotterWriter);
+  plotterReader.resume();
   return res.send({ status: "success" });
 }
 
