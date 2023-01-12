@@ -21,7 +21,7 @@ app.use(bp.json())
 app.use(express.urlencoded({extended: true}));
 app.use(fileUpload({
     limits: {
-        fileSize: 4 * 1024 * 1024 // 4 MB
+        fileSize: 16 * 1024 * 1024 // 4 MB
     },
     abortOnLimit: true,
     createParentPath: true
@@ -89,6 +89,8 @@ const renderSVG = (req, res) => {
       "cut": "in:on",
       "hatch": "in:on",
       "hatch_density": "numeric|min:0.1",
+      "speed": "integer|min:1|max:37",
+      "angle": "integer|min:0|max:90",
     },
     {},
     (err, status) => {
@@ -109,6 +111,16 @@ const renderSVG = (req, res) => {
         }
 
         cmd += " --scale " + parseFloat(json.scale)
+
+        if (json.speed)
+        {
+          cmd += " --speed " + parseInt(json.speed)
+        }
+
+        if (json.angle)
+        {
+          cmd += " --lift_angle " + parseInt(json.angle)
+        }
 
         if (json.cut) {
           cmd += " --cut"

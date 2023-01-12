@@ -1,13 +1,26 @@
 const defaultValues = {
-  "input-scale": 1,
-  "input-cut": false,
-  "input-hatch": false,
-  "input-hatch-density": 2,
+  "draw": {
+    "input-scale": 1,
+    "input-cut": false,
+    "input-hatch": false,
+    "input-hatch-density": 2,
+    "input-speed": 37,
+    "input-angle": 0,
+  },
+  "cut": {
+    "input-scale": 1,
+    "input-cut": false,
+    "input-hatch": false,
+    "input-hatch-density": 2,
+    "input-speed": 6,
+    "input-angle": 30,
+  },
 }
 
 let availableColors = []
 let drawButtonDisable = false
 let currentId = ""
+let lastMode = "draw"
 
 const updateInfo = (text) => {
   document.getElementById("info").innerHTML = text
@@ -125,12 +138,12 @@ const setInput = (field, value) => {
 
 const resetField = (name) => {
   let field = document.getElementById(name)
-  setInput(field, defaultValues[name]);
+  setInput(field, defaultValues[lastMode][name]);
   changeRenderOptions();
 }
 
 const resetRenderOptions = () => {
-  for (const [input, value] of Object.entries(defaultValues)) {
+  for (const [input, value] of Object.entries(defaultValues[lastMode])) {
     let field = document.getElementById(input)
     setInput(field, value);
   }
@@ -138,18 +151,28 @@ const resetRenderOptions = () => {
 }
 
 const changeRenderOptions = () => {
-  for (const [input, value] of Object.entries(defaultValues)) {
+  drawButtonDisable = true;
+  refreshStatus();
+  for (const [input, value] of Object.entries(defaultValues[lastMode])) {
     let field = document.getElementById(input)
     let resetButton = field.parentElement.parentElement.querySelector(":scope td:nth-child(3) button");
-    resetButton.disabled = Boolean(getInput(field) == value);
+    resetButton.disabled = Boolean(getInput(field) == defaultValues[lastMode][input]);
 
     if (input == "input-cut")
     {
       let button = document.querySelector("#draw-final+label p");
+      let curMode = ""
       if (getInput(field)) {
         button.innerHTML = "Cut!";
+        curMode = "cut";
       } else {
         button.innerHTML = "Draw!";
+        curMode = "draw";
+      }
+      if (lastMode != curMode) {
+        lastMode = curMode;
+        resetField("input-speed");
+        resetField("input-angle");
       }
     }
   }
