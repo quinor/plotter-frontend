@@ -150,7 +150,8 @@ display: grid;
   opacity: 50%;
 }
 
-table .small-button {
+
+.small-button {
   margin: 0.5em 0em;
   width: 100%;
   height: 2em;
@@ -171,6 +172,7 @@ table .small-button {
 #settings table {
   all: unset;
   box-sizing: border-box;
+  overflow: scroll;
 }
 
 #settings * {
