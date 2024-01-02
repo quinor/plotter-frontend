@@ -151,22 +151,22 @@ const renderSVG = (req, res) => {
           if (error) { return res.json({"success": false, "step": 1, "error": j.error}) }
 
           exec(cmd + "dry_run.wild --dry_run", (error, stdout, stderr) => {
-              console.log("====== dry_run ======\n")
-              console.log(cmd + "dry_run.wild --dry_run\n")
+            console.log("====== dry_run ======\n")
+            console.log(cmd + "dry_run.wild --dry_run\n")
+            console.log(stdout)
+            console.log(stderr)
+            j = JSON.parse(stdout)
+            if (error) { return res.json({"success": false, "step": 2, "error": j.error}) }
+
+            exec(cmd + "draw.wild", (error, stdout, stderr) => {
+              console.log("====== draw ======\n")
+              console.log(cmd + "draw.wild\n")
               console.log(stdout)
               console.log(stderr)
               j = JSON.parse(stdout)
-              if (error) { return res.json({"success": false, "step": 2, "error": j.error}) }
+              if (error) { return res.json({"success": false, "step": 3, "error": j.error}) }
 
-            exec(cmd + "draw.wild", (error, stdout, stderr) => {
-                console.log("====== draw ======\n")
-                console.log(cmd + "draw.wild\n")
-                console.log(stdout)
-                console.log(stderr)
-                j = JSON.parse(stdout)
-                if (error) { return res.json({"success": false, "step": 3, "error": j.error}) }
-
-                return res.json({"success": true, "output": j.output})
+              return res.json({"success": true, "output": j.output})
             });
           });
         });
