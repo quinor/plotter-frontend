@@ -1,6 +1,8 @@
 const defaultValues = {
   "draw": {
     "input-scale": 1,
+    "input-mirror": false,
+    "input-shrink": false,
     "input-cut": false,
     "input-hatch": false,
     "input-hatch-density": 2,
@@ -9,6 +11,8 @@ const defaultValues = {
   },
   "cut": {
     "input-scale": 1,
+    "input-mirror": false,
+    "input-shrink": false,
     "input-cut": false,
     "input-hatch": false,
     "input-hatch-density": 2,
@@ -98,11 +102,11 @@ const uploadSVG = () => {
       return res.json()
     }).then((out) => {
       if (out === undefined) { return; }
-      if(!out.success){
-        updateInfo("errors occurred in remote command (step: " + out.step + ", error: " + JSON.stringify(out.error) + ")")
+      if(!out.success) {
+        updateInfo("error occurred in remote command (step: " + out.step + ", error: " + JSON.stringify(out.error) + ")")
       } else {
-        let json = JSON.parse(out.stdout);
-        availableColors = json.colors;
+        console.log(out);
+        availableColors = out.output.colors;
       }
     }).then(() => {
       renderColorPicker();
@@ -202,12 +206,12 @@ const renderSVG = () => {
     return res.json()
   }).then((out) => {
     if (out === undefined) { return; }
-    if(!out.success){
-      updateInfo("errors occurred in remote command (step: " + out.step + ", error: " + JSON.stringify(out.error) + ")")
+    if(!out.success) {
+      updateInfo("error occurred in remote command (step: " + out.step + ", error: " + JSON.stringify(out.error) + ")")
     } else {
-      let json = JSON.parse(out.stdout);
-      let size = json.transformed_size;
-      updateInfo(`extents: (${size.begin.x}mm, ${size.begin.y}mm) to (${size.end.x}mm, ${size.end.y}mm)`);
+      let size = out.output.transformed_size.size;
+      let offset = out.output.translate;
+      updateInfo(`size: ${size.x}mm by ${size.y}mm <br/> offset: x=${offset.x}mm, y=${offset.y}mm`);
       showPreview();
       document.getElementById("show-original").disabled = false;
       document.getElementById("show-preview").disabled = false;

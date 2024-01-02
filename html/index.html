@@ -65,6 +65,18 @@
             <td><span class="input-description">Scale of the plot</span></td>
           </tr>
           <tr>
+            <td><label class="input-label" for="input-mirror">Mirror</label></td>
+            <td><input form="render-options" type="checkbox" id="input-mirror" name="mirror" class="input-checkbox" onchange="changeRenderOptions()"></td>
+            <td><button type="button" class="reset-button" disabled onclick="resetField('input-mirror')">&#10006;</button></td>
+            <td><span class="input-description">Mirror the input image</span></td>
+          </tr>
+          <tr>
+            <td><label class="input-label" for="input-shrink">Shrink</label></td>
+            <td><input form="render-options" type="checkbox" id="input-shrink" name="shrink" class="input-checkbox" onchange="changeRenderOptions()"></td>
+            <td><button type="button" class="reset-button" disabled onclick="resetField('input-shrink')">&#10006;</button></td>
+            <td><span class="input-description">Shrink the bounding box to fit what's plotted.</span></td>
+          </tr>
+          <tr>
             <td><label class="input-label" for="input-cut">Cut</label></td>
             <td><input form="render-options" type="checkbox" id="input-cut" name="cut" class="input-checkbox" onchange="changeRenderOptions()"></td>
             <td><button type="button" class="reset-button" disabled onclick="resetField('input-cut')">&#10006;</button></td>
@@ -143,7 +155,6 @@
     <div id="progress-bar">
       <progress value="0" max="1"></progress>
     </div>
-    <audio style="display: none" src="/static/fart.mp3" id="web-3"></audio>
     <script src="/static/script.js"></script>
   </body>
 </html>

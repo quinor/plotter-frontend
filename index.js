@@ -86,6 +86,8 @@ const renderSVG = (req, res) => {
       "colors_only": "boolean",
       "color_key": "regex:/^(#[0-9a-fA-F]{6}\\s?)+$/",
       "scale": "required|numeric|min:0.1",
+      "mirror": "in:on",
+      "shrink": "in:on",
       "cut": "in:on",
       "hatch": "in:on",
       "hatch_density": "numeric|min:0.1",
@@ -98,7 +100,7 @@ const renderSVG = (req, res) => {
         res.status(412).send(err);
       } else {
         let cmd = "./wild_driver_bin";
-        cmd += " --json --input " + path.join(req.basePath, "image.svg");
+        cmd += " --input " + path.join(req.basePath, "image.svg");
         cmd += " --vis " + path.join(req.basePath, "vis.svg");
 
         if (json.colors_only) {
@@ -122,6 +124,12 @@ const renderSVG = (req, res) => {
           cmd += " --lift_angle " + parseInt(json.angle)
         }
 
+        if (json.mirror) {
+          cmd += " --mirror"
+        }
+        if (json.shrink) {
+          cmd += " --shrink_to_size"
+        }
         if (json.cut) {
           cmd += " --cut"
         }
@@ -139,23 +147,26 @@ const renderSVG = (req, res) => {
           console.log(cmd + "box.wild --box\n")
           console.log(stdout)
           console.log(stderr)
-          if (error) { return res.json({"success": false, "step": 1, "error": error}) }
+          j = JSON.parse(stdout)
+          if (error) { return res.json({"success": false, "step": 1, "error": j.error}) }
 
           exec(cmd + "dry_run.wild --dry_run", (error, stdout, stderr) => {
               console.log("====== dry_run ======\n")
               console.log(cmd + "dry_run.wild --dry_run\n")
               console.log(stdout)
               console.log(stderr)
-              if (error) { return res.json({"success": false, "step": 2, "error": error}) }
+              j = JSON.parse(stdout)
+              if (error) { return res.json({"success": false, "step": 2, "error": j.error}) }
 
             exec(cmd + "draw.wild", (error, stdout, stderr) => {
-                  console.log("====== draw ======\n")
-                  console.log(cmd + "draw.wild\n")
-                  console.log(stdout)
-                  console.log(stderr)
-                  if (error) { return res.json({"success": false, "step": 3, "error": error}) }
+                console.log("====== draw ======\n")
+                console.log(cmd + "draw.wild\n")
+                console.log(stdout)
+                console.log(stderr)
+                j = JSON.parse(stdout)
+                if (error) { return res.json({"success": false, "step": 3, "error": j.error}) }
 
-              return res.json({"success": true, "stdout": stdout})
+                return res.json({"success": true, "output": j.output})
             });
           });
         });
